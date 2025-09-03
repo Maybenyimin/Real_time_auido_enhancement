@@ -1,0 +1,44 @@
+# config_hybrid_eval_k16.yaml
+project_name: "Real-Time Speech Enhancement"
+save_dir: "./checkpoints"
+
+sample_rate: 16000
+segment_length: 2.0        # FIX: was 'segement_length'
+
+dataset:
+  train_noisy: "./data/noisy/train_noisy"
+  train_clean: "./data/clean/train_clean"
+  test_noisy:  "./data/noisy/test_noisy"
+  test_clean:  "./data/clean/test_clean"   # FIX: wrong path before
+
+encoder:
+  out_channels: 256
+  kernel_size: 16           # FIX: must match the checkpoint you’re loading
+  stride: 8
+
+tcn:
+  num_blocks: 8             # FIX: was 'num_block'
+  channels: 256
+  kernel_size: 3
+  dilation_base: 2
+
+conformer:
+  num_blocks: 2
+  d_model: 256
+  num_heads: 4
+  ff_expansion_factor: 2
+  conv_kernel_size: 31
+  dropout: 0.1
+
+decoder:
+  out_channels: 1
+
+# Training (kept for completeness)
+batch_size: 8
+num_epochs: 60
+learning_rate: 0.0003
+optimizer: "adam"
+loss_function: "si_snr"
+early_stopping_patience: 15
+log_interval: 10            # FIX: underscore, if you plan to use it
+metrics: [pesq, stoi, si_snr]

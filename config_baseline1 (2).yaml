@@ -1,0 +1,66 @@
+project_name: "Real-Time Speech Enhancement"
+save_dir: "./checkpoints"
+
+# Data / audio
+sample_rate: 16000
+segment_length: 2.0        # 2.0 s segments (streaming-friendly)
+frame_size_ms: 20
+frame_shift_ms: 10
+
+dataset:
+  train_noisy: "/content/real-time-speech-enhancement/data/noisy/train_noisy"
+  train_clean: "/content/real-time-speech-enhancement/data/clean/train_clean"
+  test_noisy:  "/content/real-time-speech-enhancement/data/noisy/test_noisy"
+  test_clean:  "/content/real-time-speech-enhancement/data/clean/test_clean"
+
+# Encoder–Separator–Decoder (separator = lightweight causal TCN stem + causal SE-Conformer)
+encoder:
+  out_channels: 256
+  kernel_size: 16
+  stride: 8
+
+tcn:
+  num_blocks: 2            # lightweight causal TCN stem (matches report wording)
+  channels: 256
+  kernel_size: 3
+  dilation_base: 2
+  causal: true
+
+conformer:
+  num_blocks: 2
+  d_model: 256
+  num_heads: 4
+  ff_expansion_factor: 2
+  conv_kernel_size: 31
+  dropout: 0.1
+  causal_attention: true   # strictly lower-triangular mask
+  causal_conv: true        # causal padding for conv module
+  relative_positional_encoding: true
+
+decoder:
+  out_channels: 1
+
+# Training
+batch_size: 8
+num_epochs: 60
+learning_rate: 0.0003
+optimizer: "adam"
+loss_function: "si_snr"
+early_stopping_patience: 15
+log_interval: 10
+seed: 42
+num_workers: 4
+device: "cuda"
+
+# Inference (streaming)
+inference:
+  rolling_window_s: 2.0    # rolling 2 s windows, no look-ahead
+
+# Evaluation
+metrics: [pesq, stoi, si_snr, rtf]
+metrics_config:
+  pesq_mode: "wb"          # wideband PESQ at 16 kHz
+
+# Outputs
+CHECKPOINT_DIR: "./checkpoints"
+SUBMISSION_DIR: "./submission"
